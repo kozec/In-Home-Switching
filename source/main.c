@@ -81,7 +81,7 @@ void switchDestroy()
     audoutStopAudioOut();
     audoutExit();
     networkDestroy();
-    gfxExit();
+    // gfxExit();
     pcvExit();
     plExit();
 }

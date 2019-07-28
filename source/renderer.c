@@ -64,7 +64,7 @@ RenderContext *createRenderer()
 
 void applyOC(RenderContext *context)
 {
-    pcvSetClockRate(PcvModule_Cpu, clock_rates[context->overclock_status]);
+    pcvSetClockRate(PcvModule_CpuBus, clock_rates[context->overclock_status]);
 }
 
 void setFrameAvail(RenderContext *context)
