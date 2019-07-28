@@ -2,7 +2,6 @@
 #define _RENDERER_H
 
 #include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
 
 
 #include "context.h"

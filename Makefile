@@ -61,7 +61,7 @@ LIBS    := -lSDL2_ttf -lSDL2_image -lSDL2_mixer -lSDL2 -lSDL2_gfx \
 			-lglad -lEGL -lglapi -ldrm_nouveau \
 			-lvorbisidec -logg -lmpg123 -lmodplug -lstdc++ \
 			-lglad -lEGL -lglapi -ldrm_nouveau \
-			-lavformat -lavcodec -lswresample -lswscale -lavutil -lbz2 -lass -ltheora -lvorbis -lopus\
+			-lavformat -lavcodec -lavutil \
 			-lnx -lm -lfreetype -lpng -lminizip -lz -lvpx
 
 #---------------------------------------------------------------------------------

@@ -1,0 +1,56 @@
+diff -NBaur ffmpeg-4.0.1.old/configure ffmpeg-4.0.1.new/configure
+--- ffmpeg-4.0.1.old/configure	2018-06-16 02:12:16.000000000 +0100
++++ ffmpeg-4.0.1.new/configure	2019-02-01 09:37:02.607342895 +0000
+@@ -5250,6 +5250,9 @@
+         ;;
+     minix)
+         ;;
++    horizon)
++        network_extralibs="-lnx"
++        ;;
+     none)
+         ;;
+     *)
+diff -NBaur ffmpeg-4.0.1.old/libavfilter/vf_drawtext.c ffmpeg-4.0.1.new/libavfilter/vf_drawtext.c
+--- ffmpeg-4.0.1.old/libavfilter/vf_drawtext.c	2018-04-20 11:02:57.000000000 +0100
++++ ffmpeg-4.0.1.new/libavfilter/vf_drawtext.c	2019-02-01 09:31:26.128712790 +0000
+@@ -37,7 +37,9 @@
+ #if HAVE_UNISTD_H
+ #include <unistd.h>
+ #endif
++#ifndef __SWITCH__
+ #include <fenv.h>
++#endif
+ 
+ #if CONFIG_LIBFONTCONFIG
+ #include <fontconfig/fontconfig.h>
+@@ -1038,12 +1040,16 @@
+         }
+     }
+ 
++#ifndef __SWITCH__
+     feclearexcept(FE_ALL_EXCEPT);
++#endif
+     intval = res;
++#ifndef __SWITCH__
+     if ((ret = fetestexcept(FE_INVALID|FE_OVERFLOW|FE_UNDERFLOW))) {
+         av_log(ctx, AV_LOG_ERROR, "Conversion of floating-point result to int failed. Control register: 0x%08x. Conversion result: %d\n", ret, intval);
+         return AVERROR(EINVAL);
+     }
++#endif
+ 
+     if (argc == 3)
+         av_strlcatf(fmt_str, sizeof(fmt_str), "0%u", positions);
+--- ffmpeg-4.0.1.old/libavformat/os_support.c.orig	2019-07-28 07:08:06.218632547 +0200
++++ ffmpeg-4.0.1.old/libavformat/os_support.c	2019-07-28 07:09:16.478636210 +0200
+@@ -43,6 +43,10 @@
+ 
+ #include "network.h"
+ 
++#ifdef __SWITCH__
++#define HAVE_INET_ATON 1
++#endif
++
+ #if !HAVE_INET_ATON
+ #include <stdlib.h>
+ 
