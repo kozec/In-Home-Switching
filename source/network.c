@@ -50,6 +50,8 @@ int connectJoyConSocket(JoyConSocket* connection, int port)
         struct sockaddr_in server;
 
         connection->lissock = socket(AF_INET, SOCK_STREAM, 0);
+        setsockopt(connection->lissock, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
+        setsockopt(connection->lissock, SOL_SOCKET, SO_REUSEPORT, &(int){ 1 }, sizeof(int));
         server.sin_family = AF_INET;
         server.sin_addr.s_addr = INADDR_ANY;
         server.sin_port = htons(port);
@@ -84,6 +86,7 @@ void sendJoyConInput(JoyConSocket* connection, const JoyPkg* pkg)
 {
     if (send(connection->sock, pkg, sizeof(JoyPkg), 0) != sizeof(JoyPkg))
     {
+        close(connection->sock);
         connection->sock = -1;
     }
 }
