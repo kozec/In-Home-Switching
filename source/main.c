@@ -86,10 +86,10 @@ void switchDestroy()
     plExit();
 }
 
-void startInput()
+void startInput(JoyConSocket* joyconcon)
 {
     static Thread inputHandlerThread;
-    threadCreate(&inputHandlerThread, inputHandlerLoop, NULL, 0x1000, 0x2b, 0);
+    threadCreate(&inputHandlerThread, inputHandlerLoop, (void*)joyconcon, 0x1000, 0x2b, 0);
     threadStart(&inputHandlerThread);
 }
 
@@ -115,6 +115,7 @@ int main(int argc, char **argv)
 
     /* Init all switch required systems */
     switchInit();
+    JoyConSocket* joycon = createJoyConSocket();
     renderContext = createRenderer();
     videoContext = createVideoContext();
     videoContext->renderContext = renderContext;
@@ -125,7 +126,7 @@ int main(int argc, char **argv)
     startRender(videoContext);
 
     /* Run input handling in background */
-    startInput();
+    startInput(joycon);
 
 
     while (appletMainLoop())
@@ -134,7 +135,7 @@ int main(int argc, char **argv)
         {
             displayFrame(renderContext);
         } else {
-            drawSplash(renderContext);
+            drawSplash(renderContext, joycon);
         }
     }
 

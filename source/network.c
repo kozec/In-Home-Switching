@@ -9,14 +9,9 @@
 #include <errno.h>
 #include <arpa/inet.h>
 
-#define SLEN 300
-static char _net_status[SLEN];
-char* net_status = _net_status;
-
 
 void networkInit(const SocketInitConfig* conf)
 {
-    snprintf(net_status, SLEN, "Initializing...");
     //socketInitializeDefault();
     socketInitialize(conf);
     nxlinkStdio();
@@ -29,10 +24,33 @@ void networkDestroy()
     socketExit();
 }
 
+void setNetStatus(JoyConSocket* connection, const char* fmt, ...)
+{
+    va_list args;
+    mutexLock(&connection->net_status_mut);
+    va_start(args, fmt);
+    vsnprintf(connection->net_status, sizeof(connection->net_status), fmt, args);
+    va_end (args);
+    mutexUnlock(&connection->net_status_mut);
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end (args);
+}
+
+void getNetStatus(JoyConSocket* connection, char* target)
+{
+    mutexLock(&connection->net_status_mut);
+    memcpy(target, connection->net_status, sizeof(connection->net_status));
+    mutexUnlock(&connection->net_status_mut);
+}
+
 JoyConSocket* createJoyConSocket()
 {
     JoyConSocket* connection = (JoyConSocket*)malloc(sizeof(JoyConSocket));
+    mutexInit(&connection->net_status_mut);
     connection->target_len = 0;
+    connection->heldKeys = 0;
+    setNetStatus(connection, "Initializing...");
 
     connection->sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (connection->sock >= 0) {
@@ -47,12 +65,12 @@ JoyConSocket* createJoyConSocket()
     if (connection->sock >= 0) {
         u32 ip = gethostid();
         if (ip == (127 + 0 + 0 + (1 << 24))) {
-            snprintf(net_status, SLEN, "Listening on localhost. Is wifi enabled?");
+            setNetStatus(connection, "Listening on localhost. Is wifi enabled?");
         } else {
-            snprintf(net_status, SLEN, "Waiting for connection");
+            setNetStatus(connection, "Waiting for connection");
         }
     } else {
-        snprintf(net_status, SLEN, "Failed listen for incomming connections");
+        setNetStatus(connection, "Failed listen for incomming connections");
     }
     return connection;
 }
@@ -61,7 +79,6 @@ void freeJoyConSocket(JoyConSocket* connection)
 {
     free(connection);
 }
-
 
 void sendJoyConInput(JoyConSocket* connection, const JoyPkg* pkg)
 {
@@ -87,28 +104,25 @@ void sendJoyConInput(JoyConSocket* connection, const JoyPkg* pkg)
            connection->target_len = sizeof(connection->target);
            int r = recvfrom(connection->sock, recvbuffer, 8, 0, (struct sockaddr*)&connection->target, &connection->target_len);
            if (r < 0) {
-               snprintf(net_status, SLEN, "recvfrom failed: errno=%i (%s)", errno, strerror(errno));
-               printf("%s\n", net_status);
+               setNetStatus(connection, "recvfrom failed: errno=%i (%s)", errno, strerror(errno));
                connection->target_len = 0;
                return;
            } else {
                u8* b = (u8*)&connection->target.sin_addr.s_addr;
-               snprintf(net_status, SLEN, "Connected to %u.%u.%u.%u",    // "connected"
-                              b[0], b[1], b[2], b[3]);
-               printf("%s\n", net_status);
+               setNetStatus(connection, "Connected to %u.%u.%u.%u", b[0], b[1], b[2], b[3]);
            }
        }
        if (FD_ISSET(connection->sock, &wfds)) {
            if (connection->target_len > 0) {
                // Ready to send data
                int r = sendto(connection->sock, (char*)pkg, 0x10, 0, (struct sockaddr*)&connection->target, connection->target_len);
-               u8* b = &connection->target.sin_addr.s_addr;
+               u8* b = (u8*)&connection->target.sin_addr.s_addr;
                if (r < 0) {
-                   snprintf(net_status, SLEN, "sendto %u.%u.%u.%u:%i failed: errno=%i (%s)",
-                              b[0], b[1], b[2], b[3],
-                              ntohs(connection->target.sin_port),
-                              errno, strerror(errno));
-                   printf("%s\n", net_status);
+                   setNetStatus(connection, "sendto %u.%u.%u.%u:%i failed: errno=%i (%s)",
+                               b[0], b[1], b[2], b[3],
+                               ntohs(connection->target.sin_port),
+                               errno, strerror(errno));
+                   printf("%s\n", connection->net_status);
                }
            }
        }

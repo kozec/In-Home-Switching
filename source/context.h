@@ -35,6 +35,7 @@ typedef struct
     Mutex video_active_mut;
 
     int overclock_status;
+    bool any_key;
 
 } RenderContext;
 
@@ -56,8 +57,11 @@ typedef struct
 typedef struct
 {
     int sock;
+    socklen_t target_len;
+    char net_status[300];
+    Mutex net_status_mut;
+    unsigned long heldKeys;
     struct sockaddr_in target;
-    size_t target_len;
 } JoyConSocket;
 
 #endif

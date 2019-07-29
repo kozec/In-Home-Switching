@@ -3,6 +3,7 @@
 #include <switch.h>
 #include <libavutil/imgutils.h>
 #include <unistd.h>
+#include "network.h"
 #include "video.h"
 
 void flushSwapBuffers(void);
@@ -63,6 +64,7 @@ RenderContext *createRenderer()
     FC_LoadFont_RW(context->font, context->renderer, SDL_RWFromMem((void *)fontData.address, fontData.size), SDL_RWFromMem((void *)fontExtData.address, fontExtData.size), 1, 40, FC_MakeColor(0, 0, 0, 255), TTF_STYLE_NORMAL);
 
     context->overclock_status = 2;
+    context->any_key = false;
 
     return context;
 }
@@ -127,13 +129,14 @@ void SDL_DrawText(RenderContext *context, int x, int y, SDL_Color colour, const 
     FC_DrawColor(context->font, context->renderer, x, y, colour, text);
 }
 
-extern char* net_status;
-
-void drawSplash(RenderContext *context)
+void drawSplash(RenderContext *context, JoyConSocket* connection)
 {
+    mutexLock(&connection->net_status_mut);
     u32 ip = gethostid();
-    char str_buf[300];
-    snprintf(str_buf, 300, "IP Address: %u.%u.%u.%u\n"
+    char str_buf[600];
+    char net_status[300];
+    getNetStatus(connection, net_status);
+    snprintf(str_buf, 600, "IP Address: %u.%u.%u.%u\n"
                            "Network Status: %s\n"
                            "Overclock status: %s\n"
                            "\n"
@@ -141,6 +144,7 @@ void drawSplash(RenderContext *context)
              ip & 0xFF, (ip >> 8) & 0xFF, (ip >> 16) & 0xFF, (ip >> 24) & 0xFF,
              net_status,
              clock_strings[context->overclock_status]);
+    mutexUnlock(&connection->net_status_mut);
 
     SDL_Color black = {0, 0, 0, 255};
     SDL_Color white = {230, 230, 230, 255};
@@ -150,27 +154,32 @@ void drawSplash(RenderContext *context)
 
     SDL_RenderPresent(context->renderer);
 
-    /*
-    hidScanInput();
-    u32 keys = hidKeysDown(CONTROLLER_P1_AUTO);
-    if (keys & KEY_X)
-    {
-        if (context->overclock_status < sizeof(clock_rates) / sizeof(int) - 1)
-        {
-            context->overclock_status++;
-            applyOC(context);
+    unsigned long keys = getHeldKeys(connection);
+    if (keys) {
+        if (!context->any_key) {
+            if (keys & KEY_X)
+            {
+                context->any_key = true;
+                if (context->overclock_status < sizeof(clock_rates) / sizeof(int) - 1)
+                {
+                    context->overclock_status++;
+                    applyOC(context);
+                }
+            }
+        
+            if (keys & KEY_Y)
+            {
+                context->any_key = true;
+                if (context->overclock_status > 0)
+                {
+                    context->overclock_status--;
+                    applyOC(context);
+                }
+            }
         }
+    } else {
+        context->any_key = false;
     }
-
-    if (keys & KEY_Y)
-    {
-        if (context->overclock_status > 0)
-        {
-            context->overclock_status--;
-            applyOC(context);
-        }
-    }
-    */
 }
 
 u64 old_time, new_time;

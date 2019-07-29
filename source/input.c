@@ -20,7 +20,17 @@ void gamePadSend(JoyConSocket* connection)
     pkg.rJoyX = rJoy.dx;
     pkg.rJoyY = rJoy.dy;
 
+    mutexLock(&connection->net_status_mut);    // Reusing same mutex
+    connection->heldKeys = pkg.heldKeys;
+    mutexUnlock(&connection->net_status_mut);
     sendJoyConInput(connection, &pkg);
+}
+
+unsigned long getHeldKeys(JoyConSocket* connection) {
+    mutexLock(&connection->net_status_mut);
+    unsigned long heldKeys = connection->heldKeys;
+    mutexUnlock(&connection->net_status_mut);
+    return heldKeys;
 }
 
 void handleInput(JoyConSocket* connection)
@@ -28,9 +38,9 @@ void handleInput(JoyConSocket* connection)
     gamePadSend(connection);
 }
 
-void inputHandlerLoop(void* dummy)
+void inputHandlerLoop(void* _connection)
 {
-    JoyConSocket* connection = createJoyConSocket();
+    JoyConSocket* connection = (JoyConSocket*)_connection;
     while(appletMainLoop())
     {
         handleInput(connection);

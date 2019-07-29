@@ -39,4 +39,10 @@ void sendJoyConInput(JoyConSocket* connection, const JoyPkg* pkg);
  */
 int connectJoyConSocket(JoyConSocket* connection, int port);
 
+/*
+ * Returns status message that can be displayed on screen.
+ * Target needs to be 300B or larger.
+ */
+void getNetStatus(JoyConSocket* connection, char* target);
+
 #endif
