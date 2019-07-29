@@ -10,7 +10,7 @@
 RenderContext* createRenderer(void);
 
 /* Draws an image filling all screen */
-void drawSplash(RenderContext *context, JoyConSocket* connection);
+void drawSplash(RenderContext *context, VideoContext *videoContext, JoyConSocket* connection);
 
 /* Handles a frame received from server */
 void handleFrame(RenderContext* context, VideoContext* videoContext);

@@ -129,7 +129,7 @@ void SDL_DrawText(RenderContext *context, int x, int y, SDL_Color colour, const 
     FC_DrawColor(context->font, context->renderer, x, y, colour, text);
 }
 
-void drawSplash(RenderContext *context, JoyConSocket* connection)
+void drawSplash(RenderContext *context, VideoContext *videoContext, JoyConSocket* connection)
 {
     mutexLock(&connection->net_status_mut);
     u32 ip = gethostid();
@@ -138,11 +138,15 @@ void drawSplash(RenderContext *context, JoyConSocket* connection)
     getNetStatus(connection, net_status);
     snprintf(str_buf, 600, "IP Address: %u.%u.%u.%u\n"
                            "Network Status: %s\n"
-                           "Overclock status: %s\n"
                            "\n"
+                           "Video Mode: %s\n"
+                           "Overclock: %s\n"
+                           "\n"
+                           "[A]   Change video mode\n"
                            "[X/Y] Change clockrate",
              ip & 0xFF, (ip >> 8) & 0xFF, (ip >> 16) & 0xFF, (ip >> 24) & 0xFF,
              net_status,
+             videoContext->udp_mode ? "UDP (better latency)" : "TCP (less artefacts)",
              clock_strings[context->overclock_status]);
     mutexUnlock(&connection->net_status_mut);
 
@@ -176,6 +180,13 @@ void drawSplash(RenderContext *context, JoyConSocket* connection)
                     applyOC(context);
                 }
             }
+
+            if (keys & KEY_A)
+            {
+                context->any_key = true;
+                setVideoMode(videoContext, !getVideoMode(videoContext));
+            }
+
         }
     } else {
         context->any_key = false;

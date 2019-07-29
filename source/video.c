@@ -17,6 +17,7 @@ VideoContext *createVideoContext()
     context->video_stream_idx = -1;
     context->rgbframe = NULL;
     context->video_frame_count = 0;
+    context->udp_mode = false;
 
     for (size_t i = 0; i < 4; i++)
         context->video_dst_data[i] = NULL;
@@ -173,6 +174,23 @@ static int open_codec_context(VideoContext *context, enum AVMediaType type)
     return 0;
 }
 
+void setVideoMode(VideoContext* context, bool udp_mode)
+{
+    // Reusing already existing mutex
+    mutexLock(&context->renderContext->video_active_mut);
+    context->udp_mode = udp_mode;
+    mutexUnlock(&context->renderContext->video_active_mut);
+}
+
+bool getVideoMode(VideoContext* context)
+{
+    bool ret;
+    mutexLock(&context->renderContext->video_active_mut);
+    ret = context->udp_mode;
+    mutexUnlock(&context->renderContext->video_active_mut);
+    return ret;
+}
+
 void videoLoop(void *context_ptr)
 {
     VideoContext* context = (VideoContext*) context_ptr;
@@ -194,13 +212,24 @@ int handleVid(VideoContext *context)
 //    av_dict_set(&opts, "recv_buffer_size", "5000", 0);       // set option for size of receive buffer
 
     //open input file, and allocate format context
-    ret = avformat_open_input(&fmt_ctx, URL, 0, &opts);
+    if ((context)) {
+        // UDP
+        av_dict_set(&opts, "timeout", "500", 0);
+        av_dict_set(&opts, "reuse", "1", 0);
+        av_dict_set(&opts, "overrun_nonfatal", "1", 0);
+        av_dict_set(&opts, "listen_timeout", "500", 0);
+        ret = avformat_open_input(&fmt_ctx, UDP_URL, 0, &opts);
+    } else {
+        av_dict_set(&opts, "listen_timeout", "1000", 0);
+        // tcp_nodelay?
+        ret = avformat_open_input(&fmt_ctx, TCP_URL, 0, &opts);
+    }
     if (ret < 0)
     {
         char errbuf[100];
         av_strerror(ret, errbuf, 100);
-
         fprintf(stderr, "Input Error %s\n", errbuf);
+        setVideoActive(context->renderContext, false);
         return ret;
     }
 
@@ -280,3 +309,4 @@ int handleVid(VideoContext *context)
 
     return ret;
 }
+

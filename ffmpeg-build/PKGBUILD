@@ -3,7 +3,7 @@
 # Contributor: carstene1ns <dev f4ke de>
 
 pkgname=switch-ffmpeg
-pkgver=4.0.1
+pkgver=4.1.4
 pkgrel=1
 pkgdesc='ffmpeg port (for Nintendo Switch homebrew development)'
 arch=('any')
@@ -14,7 +14,8 @@ makedepends=('switch-pkg-config' 'devkitpro-pkgbuild-helpers')
 depends=('switch-zlib' 'switch-bzip2' 'switch-libass' 'switch-libfribidi'
          'switch-freetype' 'switch-libtheora')
 source=("https://ffmpeg.org/releases/ffmpeg-$pkgver.tar.xz" "ffmpeg.patch")
-sha256sums=('605f5c01c60db35d3b617a79cabb2c7032412be243554602eeed1b628125c0ee' 'SKIP')
+sha256sums=('f1f049a82fcfbf156564e73a3935d7e750891fab2abf302e735104fd4050a7e1'
+            'SKIP')
 groups=('switch-portlibs')
 
 prepare() {
@@ -33,13 +34,14 @@ build() {
     --extra-cflags='-D__SWITCH__ -O2 -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIC -ftls-model=local-exec' \
     --extra-cxxflags='-D__SWITCH__ -O2 -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIC -ftls-model=local-exec' \
     --extra-ldflags='-fPIE -L${PORTLIBS_PREFIX}/lib -L${DEVKITPRO}/libnx/lib' \
-    --disable-runtime-cpudetect --disable-programs --disable-debug --disable-doc \
+    --disable-runtime-cpudetect --disable-programs --disable-debug --disable-doc --disable-xlib \
     --enable-network --enable-hwaccels --disable-encoders --disable-muxers \
     --disable-swresample --disable-swscale --disable-bzlib \
     --disable-avfilter --disable-avdevice \
-    --disable-protocols --enable-protocol=tcp,udp,rtmp \
+    --disable-protocols --enable-protocol=tcp,udp \
     --disable-demuxers --enable-demuxer=h264 \
     --disable-decoders --enable-decoder=h264,aac,ac3,mp3 \
+    --disable-bsfs --enable-bsf=aac_adtstoasc,h264_mp4toannexb,h264_redundant_pps,mp3_header_decompress,h264_metadata,mpeg4_unpack_bframes \
     --disable-parsers --enable-parser=h264,aac
 
   make

@@ -12,6 +12,11 @@ int handleVid(VideoContext* context);
 /* Deallocates a video context */
 void freeVideoContext(VideoContext* context);
 
+/* Stops video and changes listening mode */
+void setVideoMode(VideoContext* context, bool udp_mode);
+
+bool getVideoMode(VideoContext* context);
+
 /* Loop for receiving and decoding video */
 void videoLoop(void *context_ptr);
 #endif

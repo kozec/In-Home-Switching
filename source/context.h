@@ -52,6 +52,7 @@ typedef struct
     int video_dst_linesize[4];
     int video_frame_count;
     RenderContext *renderContext;
+    bool udp_mode;
     //static int audio_frame_count = 0;
 } VideoContext;
 

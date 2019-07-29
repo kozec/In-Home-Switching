@@ -4,7 +4,8 @@
 #include <switch.h>
 #include "context.h"
 
-#define URL "tcp://0.0.0.0:2222"
+#define UDP_URL "udp://0.0.0.0:2222"
+#define TCP_URL "tcp://0.0.0.0:2222"
 //#define TCP_RECV_BUFFER "500000"
 
 /* Data to send to server */
