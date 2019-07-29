@@ -61,6 +61,7 @@ typedef struct
     char net_status[300];
     Mutex net_status_mut;
     unsigned long heldKeys;
+    bool touch_report_flipflop;
     struct sockaddr_in target;
 } JoyConSocket;
 

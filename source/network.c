@@ -32,9 +32,6 @@ void setNetStatus(JoyConSocket* connection, const char* fmt, ...)
     vsnprintf(connection->net_status, sizeof(connection->net_status), fmt, args);
     va_end (args);
     mutexUnlock(&connection->net_status_mut);
-    va_start(args, fmt);
-    vprintf(fmt, args);
-    va_end (args);
 }
 
 void getNetStatus(JoyConSocket* connection, char* target)
@@ -51,6 +48,7 @@ JoyConSocket* createJoyConSocket()
     connection->target_len = 0;
     connection->heldKeys = 0;
     setNetStatus(connection, "Initializing...");
+    printf("%s\n", connection->net_status);
 
     connection->sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (connection->sock >= 0) {
@@ -72,6 +70,7 @@ JoyConSocket* createJoyConSocket()
     } else {
         setNetStatus(connection, "Failed listen for incomming connections");
     }
+    printf("%s\n", connection->net_status);
     return connection;
 }
 
@@ -80,7 +79,7 @@ void freeJoyConSocket(JoyConSocket* connection)
     free(connection);
 }
 
-void sendJoyConInput(JoyConSocket* connection, const JoyPkg* pkg)
+void sendInput(JoyConSocket* connection, const JoyPkg* pkg)
 {
     if (connection->sock < 0) {
         // Failed to created socket
@@ -92,7 +91,7 @@ void sendJoyConInput(JoyConSocket* connection, const JoyPkg* pkg)
     FD_SET(connection->sock, &wfds);
     struct timeval timeout;
     timeout.tv_sec = 0;
-    timeout.tv_usec = 1;
+    timeout.tv_usec = 10;
     int available = select(connection->sock + 1, &rfds, &wfds, NULL, &timeout);
     if (available < 1) {
         printf("Cannot send joycon data; Output buffer not yet ready\n");
@@ -105,6 +104,7 @@ void sendJoyConInput(JoyConSocket* connection, const JoyPkg* pkg)
            int r = recvfrom(connection->sock, recvbuffer, 8, 0, (struct sockaddr*)&connection->target, &connection->target_len);
            if (r < 0) {
                setNetStatus(connection, "recvfrom failed: errno=%i (%s)", errno, strerror(errno));
+               printf("%s\n", connection->net_status);
                connection->target_len = 0;
                return;
            } else {
@@ -115,7 +115,7 @@ void sendJoyConInput(JoyConSocket* connection, const JoyPkg* pkg)
        if (FD_ISSET(connection->sock, &wfds)) {
            if (connection->target_len > 0) {
                // Ready to send data
-               int r = sendto(connection->sock, (char*)pkg, 0x10, 0, (struct sockaddr*)&connection->target, connection->target_len);
+               int r = sendto(connection->sock, (char*)pkg, 0x14, 0, (struct sockaddr*)&connection->target, connection->target_len);
                u8* b = (u8*)&connection->target.sin_addr.s_addr;
                if (r < 0) {
                    setNetStatus(connection, "sendto %u.%u.%u.%u:%i failed: errno=%i (%s)",

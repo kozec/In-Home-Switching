@@ -8,14 +8,23 @@
 //#define TCP_RECV_BUFFER "500000"
 
 /* Data to send to server */
-typedef struct
+typedef struct __attribute__((packed))
 {
     unsigned long heldKeys;
-    short lJoyX;
-    short lJoyY;
-    short rJoyX;
-    short rJoyY;
-}JoyPkg;
+    union {
+        struct {
+            short lJoyX;
+            short lJoyY;
+            short rJoyX;
+            short rJoyY;
+            short pad[2];
+        };
+        struct {
+            short x;
+            short y;
+        } touch[3];
+    };
+} JoyPkg;
 
 /* Init nx network and av network */
 void networkInit(const SocketInitConfig* conf);
@@ -31,7 +40,7 @@ void freeJoyConSocket(JoyConSocket* connection);
 
 
 /* Send joycon input over the network */
-void sendJoyConInput(JoyConSocket* connection, const JoyPkg* pkg);
+void sendInput(JoyConSocket* connection, const JoyPkg* pkg);
 
 /* 
  * Binds, listens and accepts connection with the server
