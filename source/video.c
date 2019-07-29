@@ -212,7 +212,7 @@ int handleVid(VideoContext *context)
 //    av_dict_set(&opts, "recv_buffer_size", "5000", 0);       // set option for size of receive buffer
 
     //open input file, and allocate format context
-    if ((context)) {
+    if (getVideoMode(context)) {
         // UDP
         av_dict_set(&opts, "timeout", "500", 0);
         av_dict_set(&opts, "reuse", "1", 0);
