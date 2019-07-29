@@ -47,6 +47,7 @@ JoyConSocket* createJoyConSocket()
     mutexInit(&connection->net_status_mut);
     connection->target_len = 0;
     connection->heldKeys = 0;
+    connection->keep_alives = KEEP_ALIVE_INTERVAL;
     setNetStatus(connection, "Initializing...");
     printf("%s\n", connection->net_status);
 
@@ -110,6 +111,7 @@ void sendInput(JoyConSocket* connection, const JoyPkg* pkg)
            } else {
                u8* b = (u8*)&connection->target.sin_addr.s_addr;
                setNetStatus(connection, "Connected to %u.%u.%u.%u", b[0], b[1], b[2], b[3]);
+               connection->keep_alives = KEEP_ALIVE_INTERVAL;
            }
        }
        if (FD_ISSET(connection->sock, &wfds)) {
@@ -117,7 +119,17 @@ void sendInput(JoyConSocket* connection, const JoyPkg* pkg)
                // Ready to send data
                int r = sendto(connection->sock, (char*)pkg, 0x14, 0, (struct sockaddr*)&connection->target, connection->target_len);
                u8* b = (u8*)&connection->target.sin_addr.s_addr;
-               if (r < 0) {
+               if (connection->keep_alives > 0)
+               {
+                   connection->keep_alives --;
+                   if (connection->keep_alives == 0)
+                   {
+                       setNetStatus(connection, "Connection lost. Waiting for connection.");
+                   }
+               }
+
+               if (r < 0)
+               {
                    setNetStatus(connection, "sendto %u.%u.%u.%u:%i failed: errno=%i (%s)",
                                b[0], b[1], b[2], b[3],
                                ntohs(connection->target.sin_port),

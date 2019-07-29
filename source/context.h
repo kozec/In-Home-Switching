@@ -10,6 +10,7 @@
 
 #define RESX 1280
 #define RESY 720
+#define KEEP_ALIVE_INTERVAL 30
 
 
 typedef struct
@@ -63,6 +64,7 @@ typedef struct
     unsigned long heldKeys;
     bool touch_report_flipflop;
     struct sockaddr_in target;
+    int keep_alives;
 } JoyConSocket;
 
 #endif
