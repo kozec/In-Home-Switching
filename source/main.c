@@ -120,7 +120,7 @@ int main(int argc, char **argv)
     videoContext->renderContext = renderContext;
 
     /* Run audio handling in background */
-    startAudio();
+    // startAudio();
 
     startRender(videoContext);
 

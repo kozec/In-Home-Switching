@@ -6,6 +6,7 @@
 #include <SDL.h>
 #include <SDL2/SDL_image.h>
 #include "SDL_FontCache.h"
+#include <arpa/inet.h>
 
 #define RESX 1280
 #define RESY 720
@@ -54,8 +55,9 @@ typedef struct
 
 typedef struct
 {
-    int lissock;
     int sock;
+    struct sockaddr_in target;
+    size_t target_len;
 } JoyConSocket;
 
 #endif
